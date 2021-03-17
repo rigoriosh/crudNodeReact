@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors'); /* for policy error of cors */
 const app = express();
 const mysql = require('mysql');
+const { response } = require('express');
 
 app.use(cors());
 app.use(express.json());
@@ -109,6 +110,18 @@ app.post('/addMaterias', (req, resp) => {
     })
 });
 
+app.post('/addSemestre', (req, resp) => {
+    const firstMat = req.body.firstMat;
+    const secondMat = req.body.secondMat;
+    const thirdMat = req.body.thirdMat;
+    const idusers = req.body.idusers;
+    const stament = "INSERT INTO materselected (firstMat, secondMat, thirdMat, idusers) VALUES (?,?,?,?)";
+    db.query(stament, [firstMat, secondMat, thirdMat, idusers], (err, result) => {
+        console.log("err:", err);
+        resp.send(result)
+    })
+})
+
 app.post("/login", (req, response) => {
     console.log('in request /login')
     const username = req.body.username, password = req.body.password;
@@ -126,6 +139,63 @@ app.post("/login", (req, response) => {
     })
 });
 
+app.post("/getUserByNameAndEmail", (req, response) => {
+    console.log('in request /login')
+    const username = req.body.name;
+    const email = req.body.email;
+    
+    const stament = "SELECT * FROM users WHERE username = ? AND email = ?";    
+    db.query(stament, [username, email], (err, result) => {        
+        if (err) {
+            response.send({err});
+        } 
+        
+        (result.length > 0)
+        ? response.send(result)
+        : response.send({message: "Wrong, we don't get information!"});
+    
+        
+    })
+});
+
+app.post("/getClasById", (req, response) => {
+    const idclases = req.body.idclases;
+    
+    const stament = "SELECT * FROM clases WHERE idclases = ?";    
+    db.query(stament, [idclases], (err, result) => {        
+        if (err) {
+            response.send({err});
+        } 
+        
+        (result.length > 0)
+        ? response.send(result)
+        : response.send({message: "Wrong, we don't get information!"});
+    })
+});
+
+app.post("/getMaterSelectedById", (req, response) => {
+    const idmaterSelected = req.body.idmaterSelected;
+    
+    const stament = "SELECT * FROM materselected WHERE idmaterSelected = ?";    
+    db.query(stament, [idmaterSelected], (err, result) => {        
+        if (err) {
+            response.send({err});
+        } 
+        
+        (result.length > 0)
+        ? response.send(result)
+        : response.send({message: "Wrong, we don't get information!"});
+    })
+});
+
+app.get('/getClases', (req, resp) => {   
+    const sqlStament = 'SELECT * FROM clases';
+    db.query(sqlStament, (err, result) => {
+        if(err) resp.send(err)
+        const miRes = JSON.stringify(result);
+        resp.send(miRes)
+    })
+});
 
 
 app.delete("/api/delete/:movie_name", (req, resp) => {
@@ -154,9 +224,20 @@ app.put("/updateUserRol", (req, resp) => {
         resp.send(result);
     }); 
 });
+
+app.put('/updateUserClaseSemestre',(req, resp) => {
+    const idclases = req.body.idclases;
+    const idmaterSelected = req.body.idmaterSelected;
+    const idusers = req.body.idusers;
+    const sqlStament = 'UPDATE users SET idclases = ?, idmaterSelected = ?  WHERE idusers = ?';
+    db.query(sqlStament, [idclases, idmaterSelected, idusers], (err, result) => {
+        console.log('err: ', err);
+        resp.send(result);
+    })
+});
 app.listen(3001, ()=>{
     console.log('hi Rigo i"m running on port 3001');
-})
+});
 
 
 
